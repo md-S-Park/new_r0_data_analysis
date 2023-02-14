@@ -9,7 +9,7 @@ library(tidyverse)
 library(readxl)
 
 ### Data 불러오기
-dat <- read_excel("G:\\내 드라이브\\dev\\new_r0_data_analysis\\vein_230206.xlsx", sheet = "vein_selected_final")
+dat <- read_excel("G:\\내 드라이브\\dev\\new_r0_data_analysis\\vein_230213.xlsx", sheet = "vein_selected_final")
 dat1 <- dat
 ```
 
@@ -106,7 +106,7 @@ wilcox.test(male_s$d_horizontal, female_s$d_horizontal, alternative = "two.sided
 ---
 
 
-Table 3. Age 분석하기
+##Table 3. Age 분석하기
 
 그룹지우기
 
@@ -180,7 +180,10 @@ kruska_horizontal_bmi <- kruskal.test(d_horizontal ~ bmi_gr, data = dat1_bmi)
 summary(kruska_horizontal_bmi)
 ```
 
+
 ---
+
+
 ## Table 5. 나이, BMI에 따른 anatomy의 변화
 
 ```{r}
@@ -192,3 +195,57 @@ cor.test(dat1$BMI, dat1$depth, method = "spearman")
 cor.test(dat1$BMI, dat1$d_vertical, method = "spearman")
 cor.test(dat1$BMI, dat1$d_horizontal, method = "spearman")
 ```
+
+
+
+----
+
+## 기타 분석
+
+```{r}
+library("Hmisc")
+library("corrplot")
+temp <- dat1 %>% 
+  select(age, BMI, depth, d_vertical, d_horizontal)
+names(temp) <- c("Age", "BMI", "Depth", "Vertical", "Horizontal")
+pairs(temp)
+
+
+## 상관분석
+# age
+rcorr(temp$Age, temp$BMI, type="spearman")
+rcorr(temp$Age, temp$Depth, type="spearman")
+rcorr(temp$Age, temp$Vertical, type="spearman")
+rcorr(temp$Age, temp$Horizontal, type="spearman")
+
+# BMI
+rcorr(temp$BMI, temp$Depth, type="spearman")
+rcorr(temp$BMI, temp$Vertical, type="spearman")
+rcorr(temp$BMI, temp$Horizontal, type="spearman")
+
+# Other
+rcorr(temp$Depth, temp$Vertical, type="spearman")
+rcorr(temp$Depth, temp$Horizontal, type="spearman")
+rcorr(temp$Vertical, temp$Horizontal, type="spearman")
+
+cor_matrix <- cor(temp, method = "spearman")
+corrplot(cor_matrix,method ="circle", type="upper",
+         addCoef.col ="black", tl.col ="black", tl.srt=45)
+
+
+## 회귀분석
+library("QuantPsyc")
+library("stargazer")
+library("car")
+
+fit <- lm(Horizontal~BMI, data=temp)
+summary(fit)
+lm.beta(fit)
+durbinWatsonTest(fit)
+
+m_fit <- lm(Horizontal ~ Age + BMI, data=temp)
+summary(m_fit)
+lm.beta(m_fit)
+durbinWatsonTest(m_fit)
+```
+
