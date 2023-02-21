@@ -1,10 +1,10 @@
 ---
-title: "r0_analysis_report"
+title: "method_1_original"
 output: html_document
-date: "2023-02-10"
+date: "2023-02-20"
 ---
 
-# 1. Data 셋팅하기
+# 0. Data 셋팅하기
 
 ```{r setup, include=FALSE}
 library(tidyverse)
@@ -15,25 +15,23 @@ dat <- read_excel("G:\\내 드라이브\\dev\\new_r0_data_analysis\\vein_230213.
 dat1 <- dat
 ```
 
-## 1) IQR(Inter-Quartile Range)를 기준으로 이상치를 제거
+---
+# 1. Table 1: Demographics
 
 ```{r}
-out_d <- boxplot(dat1$depth)$stats
-out_v <- boxplot(dat1$d_vertical)$stats
-out_h <- boxplot(dat1$d_horizontal)$stats
-dat1_clean <- dat1
-dat1_clean$depth <- ifelse(dat1_clean$depth < out_d[1,] | dat1_clean$depth > out_d[5,], NA, dat1_clean$depth)
-dat1_clean$d_vertical <- ifelse(dat1_clean$d_vertical < out_d[1,] | dat1_clean$d_vertical > out_d[5,], NA, dat1_clean$d_vertical)
-dat1_clean$d_horizontal <- ifelse(dat1_clean$d_horizontal < out_d[1,] | dat1_clean$d_horizontal > out_d[5,], NA, dat1_clean$d_horizontal)
+dat_demo <- read_excel("G:\\내 드라이브\\dev\\new_r0_data_analysis\\vein_230213.xlsx", sheet = "male_female")
+dat_demo1 <- dat_demo
 
-
-### Indentify data structure
-table(is.na(dat1_clean)) # 결측치 확인하기
-colSums(is.na(dat1_clean))
+dat_demo1_age <- dat_demo1 %>% 
+  mutate(age_gr=cut(age, 
+                    c(-Inf, 30, 40, 50, 60, Inf),
+                    c('20-29', '30-39','40-49','50-59','60-69')))
+glimpse(dat_demo1_age)
+table(dat_demo1_age$age_gr)
 ```
 
 
----
+
 
 # 2. Table 2
 

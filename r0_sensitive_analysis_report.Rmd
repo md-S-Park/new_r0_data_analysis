@@ -1,4 +1,10 @@
 ---
+title: "r0_sensitive_analysis_report"
+output: html_document
+date: "2023-02-14"
+---
+
+---
 title: "r0_analysis_report"
 output: html_document
 date: "2023-02-10"
@@ -15,16 +21,16 @@ dat <- read_excel("G:\\내 드라이브\\dev\\new_r0_data_analysis\\vein_230213.
 dat1 <- dat
 ```
 
-## 1) IQR(Inter-Quartile Range)를 기준으로 이상치를 제거
+##1) IQR(Inter-Quartile Range)를 기준으로 이상치를 제거
 
 ```{r}
 out_d <- boxplot(dat1$depth)$stats
 out_v <- boxplot(dat1$d_vertical)$stats
 out_h <- boxplot(dat1$d_horizontal)$stats
 dat1_clean <- dat1
-dat1_clean$depth <- ifelse(dat1_clean$depth < out_d[1,] | dat1_clean$depth > out_d[5,], NA, dat1_clean$depth)
-dat1_clean$d_vertical <- ifelse(dat1_clean$d_vertical < out_d[1,] | dat1_clean$d_vertical > out_d[5,], NA, dat1_clean$d_vertical)
-dat1_clean$d_horizontal <- ifelse(dat1_clean$d_horizontal < out_d[1,] | dat1_clean$d_horizontal > out_d[5,], NA, dat1_clean$d_horizontal)
+dat1_clean$depth <- ifelse(dat1_clean$depth < out_d[1, ] | dat1_clean$depth > out_d[5, ], NA, dat1_clean$depth)
+dat1_clean$d_vertical <- ifelse(dat1_clean$d_vertical < out_d[1, ] | dat1_clean$d_vertical > out_d[5, ], NA, dat1_clean$d_vertical)
+dat1_clean$d_horizontal <- ifelse(dat1_clean$d_horizontal < out_d[1, ] | dat1_clean$d_horizontal > out_d[5, ], NA, dat1_clean$d_horizontal)
 
 
 ### Indentify data structure
@@ -84,9 +90,9 @@ wilcox.test(male$d_horizontal, female$d_horizontal, alternative = "two.sided")
 결론: 같은 테스트 결과가 나옴. 
 
 ```{r}
-male_temp <- male %>% 
+male_temp <- male %>%
   filter(!(is.na(male$depth)))
-female_temp <- female %>% 
+female_temp <- female %>%
   filter(!(is.na(female$depth)))
 wilcox.test(male_temp$depth, female_temp$depth, alternative = "two.sided")
 ```
@@ -98,10 +104,12 @@ wilcox.test(male_temp$depth, female_temp$depth, alternative = "two.sided")
 ## 1) Age 그룹별로 나누기 
 
 ```{r}
-dat1_age <- dat1_clean %>% 
-  mutate(age_gr=cut(age, 
-                    c(-Inf, 30, 40, 50, 60, Inf),
-                    c('20-29', '30-39','40-49','50-59','60-69')))
+dat1_age <- dat1_clean %>%
+  mutate(age_gr = cut(
+    age,
+    c(-Inf, 30, 40, 50, 60, Inf),
+    c("20-29", "30-39", "40-49", "50-59", "60-69")
+  ))
 glimpse(dat1_age)
 table(dat1_age$age_gr)
 table(is.na(dat1_age))
@@ -111,14 +119,16 @@ colSums(is.na(dat1_age))
 ## 2) Age 그룹별 평균 구하기 
 
 ```{r}
-dat1_age %>% 
-  group_by(age_gr) %>% 
-  summarise(mean_depth = mean(depth, na.rm = TRUE), sd_depth = sd(depth, na.rm = TRUE),
+dat1_age %>%
+  group_by(age_gr) %>%
+  summarise(
+    mean_depth = mean(depth, na.rm = TRUE), sd_depth = sd(depth, na.rm = TRUE),
     mean_d_vert = mean(d_vertical, na.rm = TRUE), sd_d_vert = sd(d_vertical, na.rm = TRUE),
-    mean_d_hori = mean(d_horizontal, na.rm = TRUE), sd_d_hori = sd(d_horizontal, na.rm = TRUE))
+    mean_d_hori = mean(d_horizontal, na.rm = TRUE), sd_d_hori = sd(d_horizontal, na.rm = TRUE)
+  )
 ```
 
-kruskal test 분석하기
+## 3) 그룹 간 비교 및 사후 검정: kruskal test 분석하기
 
 ```{r}
 library(pgirmess)
@@ -133,78 +143,79 @@ kruskalmc(dat1_age$depth, dat1_age$age_gr)
 ------------------------------------------------------------------------
 
 
-# Table 4. BMI
-그룹지우기
+# 4. Table 4. BMI
 
+## 1) BMI 그룹나누기
 ```{r}
-dat1_bmi <- dat1 %>% 
-  mutate(bmi_gr=cut(BMI, 
-                    c(-Inf, 18.5, 25, 30, Inf),
-                    c('underweight', 'normal','overwiehgt','obese')))
-View(dat1_bmi)
+dat1_bmi <- dat1_clean %>%
+  mutate(bmi_gr = cut(
+    BMI,
+    c(-Inf, 18.5, 25, 30, Inf),
+    c("underweight", "normal", "overwiehgt", "obese")
+  ))
 glimpse(dat1_bmi)
 table(dat1_bmi$bmi_gr)
 table(is.na(dat1_age))
 colSums(is.na(dat1_age))
-
-boxplot(dat1_bmi$bmi_gr)
-
 ```
 
+## 2) BMI 그룹별 평균 구하기
 
 ```{r}
-dat1_bmi %>% 
-  group_by(bmi_gr) %>% 
-  summarise(mean_depth = mean(depth), sd_depth = sd(depth),
-    mean_d_vert = mean(d_vertical), sd_d_vert = sd(d_vertical),
-    mean_d_hori = mean(d_horizontal), sd_d_hori = sd(d_horizontal))
+dat1_bmi %>%
+  group_by(bmi_gr) %>%
+  summarise(
+    mean_depth = mean(depth, na.rm = TRUE), sd_depth = sd(depth, na.rm = TRUE),
+    mean_d_vert = mean(d_vertical, na.rm = TRUE), sd_d_vert = sd(d_vertical, na.rm = TRUE),
+    mean_d_hori = mean(d_horizontal, na.rm = TRUE), sd_d_hori = sd(d_horizontal, na.rm = TRUE)
+  )
 ```
 
-kruskal test 분석하기
+## 3) Kruskal test 분석하기
 
 ```{r}
 result_depth_bmi <- kruskal.test(depth ~ bmi_gr, data = dat1_bmi)
 p_depth_bmi <- result_depth_bmi$p.value
 kruskalmc(dat1_bmi$depth, dat1_bmi$bmi_gr)
-boxplot(depth ~ bmi_gr, data=dat1_bmi, main = "Kruskal-Wallis Test",
-        xlab="BMI", ylab="Depth")
-text(x = 1.5, y = max(dat1_bmi$depth), paste("p-value=", format(p_depth_bmi, scientific = TRUE)), adj=c(0,1))
+boxplot(depth ~ bmi_gr,
+  data = dat1_bmi, main = "Kruskal-Wallis Test",
+  xlab = "BMI", ylab = "Depth"
+)
+text(x = 1.5, y = max(dat1_bmi$depth), paste("p-value=", format(p_depth_bmi, scientific = TRUE)), adj = c(0, 1))
 
 
 kruskal.test(d_vertical ~ bmi_gr, data = dat1_bmi)
 kruskal.test(d_horizontal ~ bmi_gr, data = dat1_bmi)
 ```
 
-
-
-```{r}
-#Sensitivity analysis 
-dat1_s_bmi <- dat1_sensitivity %>% 
-  mutate(bmi_gr=cut(BMI, 
-                    c(-Inf, 18.5, 25, 30, Inf),
-                    c('underweight', 'normal','overwiehgt','obese')))
-kruskal.test(depth ~ bmi_gr, data = dat1_s_bmi)
-kruskalmc(dat1_s_bmi$depth, dat1_s_bmi$bmi_gr)
-boxplot(depth ~ bmi_gr, data=dat1_s_bmi, main = "Kruskal-Wallis Test",
-        xlab="BMI", ylab="Depth")
-```
-
-
-
-
 ---
 
+# 5. 상관분석 및 회귀분석
 
-# Table 5. 나이, BMI에 따른 anatomy의 변화
+## 1) 상관분석
 
 ```{r}
-cor.test(dat1$age, dat1$depth, method = "spearman") # age-depth
-cor.test(dat1$age, dat1$d_vertical, method = "spearman") # age-vertical
-cor.test(dat1$age, dat1$d_horizontal, method = "spearman") # age-horizontal
+library("Hmisc")
+library("corrplot")
+cor.test(dat1_clean$age, dat1_clean$depth, method = "spearman") # age-depth
+cor.test(dat1_clean$age, dat1_clean$d_vertical, method = "spearman") # age-vertical
+cor.test(dat1_clean$age, dat1_clean$d_horizontal, method = "spearman") # age-horizontal
 
-cor.test(dat1$BMI, dat1$depth, method = "spearman")
-cor.test(dat1$BMI, dat1$d_vertical, method = "spearman")
-cor.test(dat1$BMI, dat1$d_horizontal, method = "spearman")
+cor.test(dat1_clean$BMI, dat1_clean$depth, method = "spearman")
+cor.test(dat1_clean$BMI, dat1_clean$d_vertical, method = "spearman")
+cor.test(dat1_clean$BMI, dat1_clean$d_horizontal, method = "spearman")
+
+temp <- dat1_clean %>%
+  dplyr::select(age, BMI, depth, d_vertical, d_horizontal)
+names(temp) <- c("Age", "BMI", "Depth", "Vertical", "Horizontal")
+pairs(temp)
+
+cor_matrix <- cor(temp, method = "spearman", use = "pairwise.complete.obs")
+corrplot(cor_matrix,
+  method = "circle", type = "upper",
+  addCoef.col = "black", tl.col = "black", tl.srt = 45
+)
+
 ```
 
 
@@ -214,34 +225,27 @@ cor.test(dat1$BMI, dat1$d_horizontal, method = "spearman")
 ## 기타 분석
 
 ```{r}
-library("Hmisc")
-library("corrplot")
-temp <- dat1 %>% 
-  select(age, BMI, depth, d_vertical, d_horizontal)
-names(temp) <- c("Age", "BMI", "Depth", "Vertical", "Horizontal")
-pairs(temp)
+
 
 
 ## 상관분석
 # age
-rcorr(temp$Age, temp$BMI, type="spearman")
-rcorr(temp$Age, temp$Depth, type="spearman")
-rcorr(temp$Age, temp$Vertical, type="spearman")
-rcorr(temp$Age, temp$Horizontal, type="spearman")
+rcorr(temp$Age, temp$BMI, type = "spearman")
+rcorr(temp$Age, temp$Depth, type = "spearman")
+rcorr(temp$Age, temp$Vertical, type = "spearman")
+rcorr(temp$Age, temp$Horizontal, type = "spearman")
 
 # BMI
-rcorr(temp$BMI, temp$Depth, type="spearman")
-rcorr(temp$BMI, temp$Vertical, type="spearman")
-rcorr(temp$BMI, temp$Horizontal, type="spearman")
+rcorr(temp$BMI, temp$Depth, type = "spearman")
+rcorr(temp$BMI, temp$Vertical, type = "spearman")
+rcorr(temp$BMI, temp$Horizontal, type = "spearman")
 
 # Other
-rcorr(temp$Depth, temp$Vertical, type="spearman")
-rcorr(temp$Depth, temp$Horizontal, type="spearman")
-rcorr(temp$Vertical, temp$Horizontal, type="spearman")
+rcorr(temp$Depth, temp$Vertical, type = "spearman")
+rcorr(temp$Depth, temp$Horizontal, type = "spearman")
+rcorr(temp$Vertical, temp$Horizontal, type = "spearman")
 
-cor_matrix <- cor(temp, method = "spearman")
-corrplot(cor_matrix,method ="circle", type="upper",
-         addCoef.col ="black", tl.col ="black", tl.srt=45)
+
 
 
 ## 회귀분석
@@ -249,14 +253,13 @@ library("QuantPsyc")
 library("stargazer")
 library("car")
 
-fit <- lm(Horizontal~BMI, data=temp)
+fit <- lm(Horizontal ~ BMI, data = temp)
 summary(fit)
 lm.beta(fit)
 durbinWatsonTest(fit)
 
-m_fit <- lm(Horizontal ~ Age + BMI, data=temp)
+m_fit <- lm(Horizontal ~ Age + BMI, data = temp)
 summary(m_fit)
 lm.beta(m_fit)
 durbinWatsonTest(m_fit)
 ```
-
