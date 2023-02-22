@@ -12,7 +12,7 @@ library(readxl)
 
 ### Data 불러오기
 dat <- read_excel("G:\\내 드라이브\\dev\\new_r0_data_analysis\\vein_230213.xlsx", sheet = "vein_selected_final")
-dat1 <- dat
+dat1_clean <- dat
 ```
 
 ---
@@ -24,13 +24,33 @@ dat_demo1 <- dat_demo
 
 dat_demo1_age <- dat_demo1 %>% 
   mutate(age_gr=cut(age, 
-                    c(-Inf, 30, 40, 50, 60, Inf),
+                    c(-Inf, 29, 39, 49, 59, Inf),
                     c('20-29', '30-39','40-49','50-59','60-69')))
 glimpse(dat_demo1_age)
-table(dat_demo1_age$age_gr)
+
+# 성별로 나누기
+dat_demo1_age_m <- dat_demo1_age %>% 
+  filter(sex=="M")
+
+dat_demo1_age_f <- dat_demo1_age %>% 
+  filter(sex=="F")
+
+# 성별 별로 나이 그룹 확인
+table(dat_demo1_age_m$age_gr)
+table(dat_demo1_age_f$age_gr)
+
+# 성별 별 평균 나이, 표준편차 구하기
+dat_demo1_age_m %>%
+  summarise(mean(age), sd(age))
+
+dat_demo1_age_f %>%
+  summarise(mean(age), sd(age))
+
+# 비교 검정하기  
+wilcox.test(dat_demo1_age_m$age, dat_demo1_age_f$age, alternative = "two.sided")
+
+
 ```
-
-
 
 
 # 2. Table 2
@@ -98,7 +118,7 @@ wilcox.test(male_temp$depth, female_temp$depth, alternative = "two.sided")
 ```{r}
 dat1_age <- dat1_clean %>% 
   mutate(age_gr=cut(age, 
-                    c(-Inf, 30, 40, 50, 60, Inf),
+                    c(-Inf, 29, 39, 49, 59, Inf),
                     c('20-29', '30-39','40-49','50-59','60-69')))
 glimpse(dat1_age)
 table(dat1_age$age_gr)
@@ -116,6 +136,7 @@ dat1_age %>%
     mean_d_hori = mean(d_horizontal, na.rm = TRUE), sd_d_hori = sd(d_horizontal, na.rm = TRUE))
 ```
 
+
 kruskal test 분석하기
 
 ```{r}
@@ -128,14 +149,53 @@ kruskalmc(dat1_age$depth, dat1_age$age_gr)
 ```
 
 
+*기타: 남자일 경우
+```{r}
+male <- male %>% 
+  mutate(age_gr=cut(age, 
+                    c(-Inf, 29, 39, 49, 59, Inf),
+                    c('20-29', '30-39','40-49','50-59','60-69')))
+female <- female %>% 
+  mutate(age_gr=cut(age, 
+                    c(-Inf, 29, 39, 49, 59, Inf),
+                    c('20-29', '30-39','40-49','50-59','60-69')))
+
+male %>% 
+  group_by(age_gr) %>% 
+  summarise(mean_depth = mean(depth, na.rm = TRUE), sd_depth = sd(depth, na.rm = TRUE),
+    mean_d_vert = mean(d_vertical, na.rm = TRUE), sd_d_vert = sd(d_vertical, na.rm = TRUE),
+    mean_d_hori = mean(d_horizontal, na.rm = TRUE), sd_d_hori = sd(d_horizontal, na.rm = TRUE))
+
+female %>% 
+  group_by(age_gr) %>% 
+  summarise(mean_depth = mean(depth, na.rm = TRUE), sd_depth = sd(depth, na.rm = TRUE),
+    mean_d_vert = mean(d_vertical, na.rm = TRUE), sd_d_vert = sd(d_vertical, na.rm = TRUE),
+    mean_d_hori = mean(d_horizontal, na.rm = TRUE), sd_d_hori = sd(d_horizontal, na.rm = TRUE))
+
+kruskal.test(depth ~ age_gr, data = male)
+kruskal.test(d_vertical ~ age_gr, data = male)
+kruskal.test(d_horizontal ~ age_gr, data = male)
+
+kruskal.test(depth ~ age_gr, data = female)
+kruskalmc(female$depth, female$age_gr)
+
+kruskal.test(d_vertical ~ age_gr, data = female)
+kruskalmc(female$d_vertical, male$age_gr)
+
+kruskal.test(d_horizontal ~ age_gr, data = female)
+```
+
+
+
+
 ------------------------------------------------------------------------
 
 
 # Table 4. BMI
-그룹지우기
+그룹 만들기
 
 ```{r}
-dat1_bmi <- dat1 %>% 
+dat1_bmi <- dat1_clean %>% 
   mutate(bmi_gr=cut(BMI, 
                     c(-Inf, 18.5, 25, 30, Inf),
                     c('underweight', 'normal','overwiehgt','obese')))
@@ -170,7 +230,10 @@ text(x = 1.5, y = max(dat1_bmi$depth), paste("p-value=", format(p_depth_bmi, sci
 
 
 kruskal.test(d_vertical ~ bmi_gr, data = dat1_bmi)
+kruskalmc(dat1_bmi$d_vertical, dat1_bmi$bmi_gr)
+
 kruskal.test(d_horizontal ~ bmi_gr, data = dat1_bmi)
+kruskalmc(dat1_bmi$d_horizontal, dat1_bmi$bmi_gr)
 ```
 
 
