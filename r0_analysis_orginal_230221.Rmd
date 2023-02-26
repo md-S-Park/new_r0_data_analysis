@@ -66,9 +66,12 @@ dat1_clean %>% # tibble 형태의 data는 기본적으로 유효숫자
 dat1_clean %>%
   group_by(sex) %>%
   summarise(
-    mean_deapth = mean(depth, na.rm = TRUE), sd_depth = sd(depth, na.rm = TRUE),
-    mean_d_vert = mean(d_vertical, na.rm = TRUE), sd_d_vert = sd(d_vertical, na.rm = TRUE),
-    mean_d_hori = mean(d_horizontal, na.rm = TRUE), sd_d_hori = sd(d_horizontal, na.rm = TRUE)
+    mean_deapth = mean(depth, na.rm = TRUE),
+     sd_depth = sd(depth, na.rm = TRUE),
+    mean_d_vert = mean(d_vertical, na.rm = TRUE),
+     sd_d_vert = sd(d_vertical, na.rm = TRUE),
+    mean_d_hori = mean(d_horizontal, na.rm = TRUE),
+     sd_d_hori = sd(d_horizontal, na.rm = TRUE)
   )
 ```
 
